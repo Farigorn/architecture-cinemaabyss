@@ -1,0 +1,18 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: proxy
+
+
+proxy:
+  upstream:
+    monolithBaseUrl: http://monolith:8080
+    moviesBaseUrl: http://movies-service:8081
+  migration:
+    moviesPercent: ${MOVIES_MIGRATION_PERCENT:0}
+
+logging:
+  level:
+    root: INFO
