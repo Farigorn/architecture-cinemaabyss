@@ -37,15 +37,15 @@ public class ProxyController {
         return ResponseEntity.ok("ok");
     }
 
-    @GetMapping("/api/users")
-    public ResponseEntity<byte[]> users(HttpServletRequest request) {
-        String url = upstreamProps.monolithBaseUrl() + "/api/users";
-        return proxyClient.get(url, request);
-    }
 
     @GetMapping("/api/users")
-    public ResponseEntity<byte[]> usersById(@RequestParam("id") String id, HttpServletRequest request) {
-        String url = upstreamProps.monolithBaseUrl() + "/api/users?id=" + UriUtils.encodeQueryParam(id, StandardCharsets.UTF_8);
+    public ResponseEntity<byte[]> users(
+            @RequestParam(value = "id", required = false) String id,
+            HttpServletRequest request
+    ) {
+        String base = upstreamProps.monolithBaseUrl();
+        String url = base + "/api/users" +
+                (id != null ? "?id=" + UriUtils.encodeQueryParam(id, StandardCharsets.UTF_8) : "");
         return proxyClient.get(url, request);
     }
 
