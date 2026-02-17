@@ -8,8 +8,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriUtils;
+
+import java.nio.charset.StandardCharsets;
 
 @RestController
 public class ProxyController {
@@ -35,23 +37,70 @@ public class ProxyController {
         return ResponseEntity.ok("ok");
     }
 
-    @GetMapping("api/users")
-    public ResponseEntity<byte[]> users() {
+    @GetMapping("/api/users")
+    public ResponseEntity<byte[]> users(HttpServletRequest request) {
         String url = upstreamProps.monolithBaseUrl() + "/api/users";
-        return proxyClient.get(url);
+        return proxyClient.get(url, request);
     }
 
-    @GetMapping("api/movies")
-    public ResponseEntity<byte[]> movies(HttpServletRequest request) {
+    @GetMapping("/api/users")
+    public ResponseEntity<byte[]> usersById(@RequestParam("id") String id, HttpServletRequest request) {
+        String url = upstreamProps.monolithBaseUrl() + "/api/users?id=" + UriUtils.encodeQueryParam(id, StandardCharsets.UTF_8);
+        return proxyClient.get(url, request);
+    }
+
+    @PostMapping("/api/users")
+    public ResponseEntity<byte[]> createUsers(@RequestBody byte[] body, HttpServletRequest request) {
+        String url = upstreamProps.monolithBaseUrl() + "/api/users";
+        return proxyClient.post(url, body, request);
+    }
+
+    @PostMapping("/api/movies")
+    public ResponseEntity<byte[]> createMovie(@RequestBody byte[] body, HttpServletRequest request) {
+        String url = pickMoviesBase(request) + "/api/movies";
+        return proxyClient.post(url, body, request);
+    }
+
+    @GetMapping("/api/movies")
+    public ResponseEntity<byte[]> movies(
+            @RequestParam(value = "id", required = false) String id,
+            HttpServletRequest request
+    ) {
+        String base = pickMoviesBase(request);
+        String url = base + "/api/movies" + (id != null ? "?id=" + UriUtils.encodeQueryParam(id, StandardCharsets.UTF_8) : "");
+        return proxyClient.get(url, request);
+    }
+
+    @GetMapping("/api/payments")
+    public ResponseEntity<byte[]> paymentById(@RequestParam("id") String id, HttpServletRequest request) {
+        String url = upstreamProps.monolithBaseUrl() + "/api/payments?id=" + UriUtils.encodeQueryParam(id, StandardCharsets.UTF_8);
+        return proxyClient.get(url, request);
+    }
+
+    @PostMapping("/api/payments")
+    public ResponseEntity<byte[]> createPayment(@RequestBody byte[] body, HttpServletRequest request) {
+        String url = upstreamProps.monolithBaseUrl() + "/api/payments";
+        return proxyClient.post(url, body, request);
+    }
+
+    @GetMapping("/api/subscriptions")
+    public ResponseEntity<byte[]> subscriptionById(@RequestParam("id") String id, HttpServletRequest request) {
+        String url = upstreamProps.monolithBaseUrl() + "/api/subscriptions?id=" + UriUtils.encodeQueryParam(id, StandardCharsets.UTF_8);
+        return proxyClient.get(url, request);
+    }
+
+    @PostMapping("/api/subscriptions")
+    public ResponseEntity<byte[]> createSubscription(@RequestBody byte[] body, HttpServletRequest request) {
+        String url = upstreamProps.monolithBaseUrl() + "/api/subscriptions";
+        return proxyClient.post(url, body, request);
+    }
+
+    private String pickMoviesBase(HttpServletRequest request) {
         int percent = migrationProps.moviesPercent();
-        log.info("percent = {}", percent);
         boolean toMovies = trafficDecider.routeToMovies(request, percent);
-        log.info("toMovies = {}", toMovies);
-        String base = toMovies
-                ? upstreamProps.moviesBaseUrl()
-                : upstreamProps.monolithBaseUrl();
-        String url = base + "/api/movies";
-        log.info("url = {}", url);
-        return proxyClient.get(url);
+        String base = toMovies ? upstreamProps.moviesBaseUrl() : upstreamProps.monolithBaseUrl();
+
+        log.info("moviesPercent={}, toMovies={}, base={}", percent, toMovies, base);
+        return base;
     }
 }
