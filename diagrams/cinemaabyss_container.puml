@@ -18,7 +18,8 @@ System_Boundary(cinemaabyss, "Приложение Кинобездна"){
     Container(streaming_service, "Streaming Service", "сервис показа фильмов")
     Container(user_activity, "User activity service", "сервис отвечающий за пользовательскую активность")
     Container(subscription_service, "Subscription service", "сервис подписки")
-    Container(billing_service, "Billing service", "сервис биллинга")
+    Container(Payment_service, "Payment service", "сервис биллинга")
+    Container(event_bus, "Kafka", "Kafka protocol", "Event Bus для доменных событий")
     Container(s3, "S3", "Хранилище")
 }
 Container_Ext(reco_bus, "RabbitMQ", "AMQP", "Брокер рекомендательной системы")
@@ -34,13 +35,14 @@ Rel(api_gateway, auth_service, "Аутентификация/проверка т
 
 Rel(api_gateway, bff_layer, "HTTPS", "Проксирует запросы (Mobile, Smart, Web)")
 
-Rel_Left(billing_service, payment_system, "HTTPS", "Создание/подтверждение платежа")
-Rel(billing_service, subscription_service, "HTTPS", "Потверждение оплаты")
+Rel_Left(Payment_service, payment_system, "HTTPS", "Создание/подтверждение платежа")
+Rel_Left(Payment_service, event_bus, "Kafka", "Публикует событие", $tags="async")
+Rel(event_bus, subscription_service, "Kafka", "активирует подписку", $tags="async")
 Rel(streaming_service, subscription_service, "HTTPS", "Проверка права доступа")
 Rel(bff_layer, movie_service, "HTTPS", "карточки фильмов, получение рекомендаций")
 Rel(bff_layer, streaming_service, "HTTPS", "Начать просмотр")
 Rel(bff_layer, user_activity, "HTTPS", "Избранное/оценки")
-Rel(bff_layer, billing_service, "HTTPS", "создать платеж")
+Rel(bff_layer, Payment_service, "HTTPS", "создать платеж")
 Rel(bff_layer, subscription_service, "HTTPS", "управление подпиской")
 
 
@@ -49,7 +51,7 @@ Rel(reco_bus, movie_service, "AMQP", "Доставляет рекомендац�
 
 
 
-Rel(streaming_service, cinema_online, "HTTPS", "Получение контента")
+Rel(streaming_service, cinema_online, "HTTPS", "Получение ссылки на контент")
 Rel(movie_service, cinema_online, "HTTPS", "Импорт каталога")
 Rel(movie_service, s3, "S3 API", "хранит постеры трейлеры субтитры")
 @enduml

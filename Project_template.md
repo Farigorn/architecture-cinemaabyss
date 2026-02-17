@@ -5,7 +5,7 @@
 1. Спроектируйте to be архитектуру КиноБездны, разделив всю систему на отдельные домены и организовав интеграционное взаимодействие и единую точку вызова сервисов.
 Результат представьте в виде контейнерной диаграммы в нотации С4.
 Добавьте ссылку на файл в этот шаблон
-[ссылка на файл](ссылка)
+[cinemaabyss_container.puml](diagrams/cinemaabyss_container.puml)
 
 # Задание 2
 
@@ -276,6 +276,7 @@ cat .docker/config.json | base64
 #### Шаг 3
 Добавьте сюда скриншота вывода при вызове https://cinemaabyss.example.com/api/movies и  скриншот вывода event-service после вызова тестов.
 ![cinema_abyss_in_browser.png](docs/cinema_abyss_in_browser.png)
+![events_kuber_test.png](docs/events_kuber_test.png)
 
 # Задание 4
 Для простоты дальнейшего обновления и развертывания вам как архитектуру необходимо так же реализовать helm-чарты для прокси-сервиса и проверить работу 
@@ -350,6 +351,8 @@ minikube tunnel
 Потом вызовите 
 https://cinemaabyss.example.com/api/movies
 и приложите скриншот развертывания helm и вывода https://cinemaabyss.example.com/api/movies
+![helm.png](docs/helm.png)
+![cinema_abyss_in_browser_after_helm.png](docs/cinema_abyss_in_browser_after_helm.png)
 
 ## Удаляем все
 
