@@ -1,0 +1,57 @@
+@startuml
+!include C4_Container.puml
+AddRelTag("async", $textColor=$ARROW_FONT_COLOR, $lineColor=$ARROW_COLOR, $lineStyle=DashedLine())
+
+title Диаграмма контейнеров для Приложения "Кинобездна"
+
+System_Ext(mobile_app, "Mobile App", "Мобильное приложение")
+System_Ext(tv_app, "Smart TV App", "Приложение для Smart TV")
+System_Ext(web_app, "Web App", "Веб приложение")
+
+System_Boundary(cinemaabyss, "Приложение Кинобездна"){
+    Container(api_gateway, "API Gateway", "HTTPS Reverse Proxy", "Единая точка входа")
+
+    Container(bff_layer, "BFF Layer (минимум 3 сервиса)", "Слой из трёх BFF: mobile, smart-tv, web. Разные API.")
+
+    Container(auth_service, "Auth Service", "сервис аутентификации и авторизации")
+    Container(movie_service, "Movie Service", "сервис метаданных фильмов")
+    Container(streaming_service, "Streaming Service", "сервис показа фильмов")
+    Container(user_activity, "User activity service", "сервис отвечающий за пользовательскую активность")
+    Container(subscription_service, "Subscription service", "сервис подписки")
+    Container(Payment_service, "Payment service", "сервис биллинга")
+    Container(event_bus, "Kafka", "Kafka protocol", "Event Bus для доменных событий")
+    Container(s3, "S3", "Хранилище")
+}
+Container_Ext(reco_bus, "RabbitMQ", "AMQP", "Брокер рекомендательной системы")
+System_Ext(recommendation_system, "Recommendation system", "внешняя система рекомендаций")
+System_Ext(payment_system, "Payment system", "Платежная систему")
+System_Ext(cinema_online, "Cinema  online", "Онлайн кинотеатр")
+
+Rel(mobile_app, api_gateway, "HTTPS", "передает запрос")
+Rel(tv_app, api_gateway, "HTTPS", "передает запрос")
+Rel(web_app, api_gateway, "HTTPS", "передает запрос")
+
+Rel(api_gateway, auth_service, "Аутентификация/проверка токена")
+
+Rel(api_gateway, bff_layer, "HTTPS", "Проксирует запросы (Mobile, Smart, Web)")
+
+Rel_Left(Payment_service, payment_system, "HTTPS", "Создание/подтверждение платежа")
+Rel_Left(Payment_service, event_bus, "Kafka", "Публикует событие", $tags="async")
+Rel(event_bus, subscription_service, "Kafka", "активирует подписку", $tags="async")
+Rel(streaming_service, subscription_service, "HTTPS", "Проверка права доступа")
+Rel(bff_layer, movie_service, "HTTPS", "карточки фильмов, получение рекомендаций")
+Rel(bff_layer, streaming_service, "HTTPS", "Начать просмотр")
+Rel(bff_layer, user_activity, "HTTPS", "Избранное/оценки")
+Rel(bff_layer, Payment_service, "HTTPS", "создать платеж")
+Rel(bff_layer, subscription_service, "HTTPS", "управление подпиской")
+
+
+Rel(recommendation_system, reco_bus, "AMQP", "Публикует рекомендации", $tags="async")
+Rel(reco_bus, movie_service, "AMQP", "Доставляет рекомендации", $tags="async")
+
+
+
+Rel(streaming_service, cinema_online, "HTTPS", "Получение ссылки на контент")
+Rel(movie_service, cinema_online, "HTTPS", "Импорт каталога")
+Rel(movie_service, s3, "S3 API", "хранит постеры трейлеры субтитры")
+@enduml
